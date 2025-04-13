@@ -1,0 +1,57 @@
+name: Check PR requirements are met
+description: Ensure that conventional commits are used and version is bumped
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  check_pr_title:
+    name: Check pull request title
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR title is in conventional commit format
+        uses: ytanikin/pr-conventional-commits@2aa4e89987b1969c67601f7a9473e2c4e88a5999
+        with:
+         task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
+         add_label: 'true'
+
+  check_conventional_commits:
+    name: Check commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5
+
+      - name: Ensure commit messages are in conventional commit format
+        uses: webiny/action-conventional-commits@8bc41ff4e7d423d56fa4905f6ff79209a78776c7
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowed-commit-types: "feat,fix,docs,test,ci,refactor,perf,chore,revert,debug"
+
+  security_scan:
+    name: Scan Dockerfile for vulnerabilities
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2
+
+    - name: Build Dockerfile
+      uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+      with:
+        context: .
+        push: false
+        tags: ghcr.io/${{ github.repository_owner }}/sbom-test:${{ github.sha }}
+
+    - name: Scan Dockerfile for vulnerabilities
+      uses: anchore/scan-action@7c05671ae9be166aeb155bad2d7df9121823df32
+      id: scan
+      with:
+        image: "ghcr.io/${{ github.repository_owner }}/sbom-test:${{ github.sha }}"
+        fail-build: true
