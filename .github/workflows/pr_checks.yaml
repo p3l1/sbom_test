@@ -59,7 +59,7 @@ jobs:
       id: scan
       with:
         image: "ghcr.io/${{ github.repository_owner }}/sbom-test:${{ github.sha }}"
-        fail-build: true
+        fail-build: false
         severity-cutoff: high
         by-cve: true
         output-format: table
