@@ -13,8 +13,6 @@ permissions:
 jobs:
   check_pr_title:
     name: Check pull request title
-    permissions:
-      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Ensure PR title is in conventional commit format
